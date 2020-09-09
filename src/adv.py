@@ -4,11 +4,11 @@ from item import Item
 
 # Declare all the rooms
 all_items = {
-    'candlestick': Item('Candlestick', 'A tarnished silver candlestick. Heavy.'),
-    'match': Item('Match', 'Matches can start fires.'),
-    'boulder': Item('Boulder', 'A rock as tall and wide as you are tall.'),
-    'cobweb': Item('Cobweb', 'Yuck, does that mean there are spiders?'),
-    'dubloons': Item('Dubloons', 'A large canvas sack containing one million dubloons - jackpot!')
+    'candlestick': Item('candlestick', 'a tarnished silver candlestick'),
+    'match': Item('match', 'matches can start fires.'),
+    'boulder': Item('boulder', 'a rock as tall and wide as you are tall'),
+    'cobweb': Item('cobweb', 'yuck, does that mean there are spiders?'),
+    'dubloons': Item('dubloons', 'a large canvas sack containing one million dubloons - jackpot!')
 }
 room = {
     'outside':  Room("Outside Cave Entrance",
@@ -65,22 +65,56 @@ while next_direction:
     if new_player.location.item_list == []:
         print('No items available')
     else:
+        available_items = []
+        player_available_items = []
         for item in new_player.location.item_list:
             print(item.name, item.description) 
+            available_items.append(item.name)
+        for item in new_player.inventory:
+            player_available_items.append(item.name)
     print('Which direction would you like to go to? Or do something else? Enter one of the following: (n, s, e, w, or take/get itemname)')
     next_direction = input()
-    if lower(next_direction)[0:4] == 'take' or 'get ':
-        print('The player wants to take an item')
-        next_direction = ''
+    if 'take' in next_direction or 'get' in next_direction:
+        selected_item = next_direction.split(' ')
+        if len(selected_item) > 2:
+            print('Invalid command. Please try again.')
+        else:
+            selected_item = selected_item [1]
+            if selected_item in available_items and new_player.location.item_list != []:
+                selected_item_index = available_items.index(selected_item)
+                new_player.location.item_list[selected_item_index].on_take()
+                selected_item = new_player.location.item_list.pop(selected_item_index)
+                new_player.inventory.append(selected_item)
+            else:
+                print('That item is not in this room. Would you like to go somewhere else instead? Enter one of the following: (n, s, e, w)')
+    elif 'drop' in next_direction:
+        selected_item = next_direction.split(' ')
+        if len(selected_item) > 2:
+            print('Invalid command. Please try again.')
+        else:
+            selected_item = selected_item [1]
+            if selected_item in player_available_items and new_player.inventory != []:
+                selected_item_index = player_available_items.index(selected_item)
+                new_player.inventory[selected_item_index].on_take()
+                selected_item = new_player.inventory.pop(selected_item_index)
+                new_player.location.item_list.append(selected_item)
+            else: 
+                print('That item is not in this room. Would you like to go somewhere else instead? Enter one of the following: (n, s, e, w)')
     else:
         if next_direction == 'q':
             next_direction = ''
             print('Exiting game. Thank you for playing!')
+        elif next_direction == 'i':
+            print('Current Inventory:')
+            if new_player.inventory == []:
+                print('You have no items')
+            else:
+                for i in new_player.inventory:
+                    print(i.name)
         else:
             next_direction = next_direction + '_to'
             try: 
                 x = getattr(new_player.location, next_direction)
-                print('You can move this direction.')
                 new_player.location = x
             except AttributeError:
                 print('A pile of bricks blocks your path. Try a different direction?')
